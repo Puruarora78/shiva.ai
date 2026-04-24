@@ -12,16 +12,16 @@ token_text.extend(["<|endoftext|>","<|unk|>"])
 vocabulary = {token:i for i,token in enumerate(token_text)}
 
 class Tokenizer1:
-    def __init__(self,sentence):
-        self.sentence = sentence
-        self.id = {i:s for s,i in sentence.items()}
+    def __init__(self,sentense):
+        self.sentense = sentense
+        self.id = {i:s for s,i in sentense.items()}
         self.my_symbols = r"([!@#$%^&*()_+{}\[\]\\\":;,.<>/?\s]+)"
 
     def encoder(self,text):
         token_id = re.split(self.my_symbols,text)
         token_id = [word.strip() for word in token_id if word.strip()]
-        token_id = [word if word in self.sentence else "<|unk|>" for word in token_id]
-        token_id = [self.sentence[s] for s in token_id]
+        token_id = [word if word in self.sentense else "<|unk|>" for word in token_id]
+        token_id = [self.sentense.get(s,self.sentense["<|unk|>"]) for s in token_id]
         return token_id
     
     def decoder(self,id):
@@ -32,7 +32,9 @@ class Tokenizer1:
 
 tokenizer = Tokenizer1(vocabulary)
 
-sentence ="their greatest fear was puru"
-token_id = tokenizer.encoder(sentence)
+sentense ="their greatest fear was puru"
+token_id = tokenizer.encoder(sentense)
 print(token_id)
 
+token_text = tokenizer.decoder([6418, 3696, 3262, 6859, 7147])
+print (token_text)
