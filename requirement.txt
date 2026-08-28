@@ -1,4 +1,0 @@
-speechrecognition
-pyaudio
-setuptools
-pyttsx3
