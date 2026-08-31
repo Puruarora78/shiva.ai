@@ -3,7 +3,7 @@
 import os
 
 # select model mode
-LLM_MODE = os.getenv("LLM_MODE","MOCK")
+LLM_MODE = os.getenv("LLM_MODE","OLLAMA")
 
 
 # model modes
