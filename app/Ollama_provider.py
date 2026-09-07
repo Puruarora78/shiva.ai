@@ -3,7 +3,7 @@ from .config import OLLAMA_BASE_URL,OLLAMA_MODEL
 from .llm_provider import LLMProvider
 
 class ollama_provider(LLMProvider):
-    def generate_response(messages : list[dict] ) -> str:
+    def generate(self,messages : list[dict] ) -> str:
         response = requests.post(
             f"{OLLAMA_BASE_URL}/api/chat",
             json = {
