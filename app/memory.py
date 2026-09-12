@@ -29,7 +29,7 @@ class Conversation :
         messages = [{"role" : "system","content" : self.system_prompt}]
 
         if self.summary :
-            messages.append({"role": "system", "content" : f"Here is the messages summary ->\n {self.summary}"})
+            messages.append({"role": "system", "content" : f"This is the summary of previous conversation use this as context ->\n {self.summary}"})
 
         messages.extend(self.messages)
         

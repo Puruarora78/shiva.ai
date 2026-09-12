@@ -24,11 +24,11 @@ while True:
     
     conversation.add_assistant_message(answer)
     if memory_manager.need_summary() :
-            input("press enter for summary :")
-            try:
-                memory_manager.generate_summary()
-            except RuntimeError as e :
-                print(f"Error Occured During Generating Summary : {e}")
+        input("press enter for summary :")
+        try:
+            memory_manager.generate_summary()
+        except RuntimeError as e :
+            print(f"Error Occured During Generating Summary : {e}")
     print(f"<------------------------->\n{answer}\n<------------------------->")
     print(len(conversation.messages))
     print(conversation.summary)
