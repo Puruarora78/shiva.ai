@@ -1,8 +1,9 @@
 class Conversation :
-    def __init__(self, system_prompt):
+    def __init__(self, system_prompt,conversation_id = None):
         self.system_prompt = system_prompt
         self.summary = ""
         self.messages = []
+        self.conversation_id = conversation_id
 
     def mes_count(self):
         return len(self.messages)
@@ -31,6 +32,6 @@ class Conversation :
         if self.summary :
             messages.append({"role": "system", "content" : f"This is the summary of previous conversation use this as context ->\n {self.summary}"})
 
-        messages.extend(self.messages)
+        messages.extend(self.get_recent_messages())
         
         return messages
