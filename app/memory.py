@@ -23,6 +23,14 @@ class Conversation :
              "content" : content}
         )
 
+    def load_messages(self,messages):
+        self.messages = []
+        for role,content in messages:
+            self.messages.append(
+                {"role": role,
+                "content" : content}
+                )
+
     def get_recent_messages(self):
         return self.messages[-10:]
 

@@ -1,10 +1,12 @@
 from .memory import Conversation
 from .llm_provider import LLMProvider
+from .database import Database
 
 class Memory_Manager:
-    def __init__(self,conversation:Conversation,provider:LLMProvider):
+    def __init__(self,conversation:Conversation,provider:LLMProvider,database: Database):
         self.conversation = conversation
         self.provider = provider
+        self.database = database
         self.max_messages = 20
         self.summary_index = 0
         self.summary_interval = 10
@@ -27,11 +29,10 @@ class Memory_Manager:
         return self.conv_count() > self.max_messages
 
     def summarizing_messages(self):
-        mess = self.conversation.messages[self.summary_index : -10]
-        mess_len = len(mess)
-        if mess_len %2 != 0:
+        mess = len(self.conversation.messages) -10
+        if (mess - self.summary_index) %2 != 0:
             mess -= 1
-        return self.conversation.messages[self.summary_index:mess_len]
+        return self.conversation.messages[self.summary_index : mess]
 
     summary_prompt = '''i am providing chat summary we already had upadet it with the new messages while keeping important facts and information or any query i asked dont keep unneccesary talk , dont invent new information ,if the existing summary is empty then create a new summary with new messages and only provide updated summary'''
     def summarize_prompt (self,messages):
@@ -45,6 +46,7 @@ class Memory_Manager:
         prompt = self.summarize_prompt(messages)
         summary = self.provider.generate(prompt)
         self.conversation.set_summary(summary)
+        self.database.save_summary(self.conversation.conversation_id,summary)
         self.summary_index = len(self.conversation.messages) - 10
         # self.conversaton.get_recent_messages()
         return summary
