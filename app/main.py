@@ -25,8 +25,9 @@ elif choose_conv.lower() == "load":
     messages = database.get_messages(loaded_conversation_id)
     conversation.load_messages(messages)
 
-    loaded_summary = database.load_summary(loaded_conversation_id)
+    loaded_summary,loaded_summary_message_id = database.load_summary(loaded_conversation_id)
     conversation.set_summary(loaded_summary)
+    conversation.summary_message_id = loaded_summary_message_id
 
 else :
     print("Please Enter Correct Value")
@@ -36,13 +37,16 @@ provider = create_llm_provider()
 
 memory_manager = Memory_Manager(conversation,provider,database)
 
+if conversation.summary:
+    memory_manager.summary_index = max(0,(len(conversation.messages) - 10))
+
 while True:
     user_message = input(f"Enter Your Query : ")
 
     if user_message.lower() == "exit":
         break
-    conversation.add_user_message(user_message)
-    database.save_messages(conversation.conversation_id,"user",user_message)
+    message_id_us = database.save_messages(conversation.conversation_id,"user",user_message)
+    conversation.add_user_message(user_message,message_id_us)
 
     try:
         answer = provider.generate(conversation.get_messages())
@@ -50,9 +54,9 @@ while True:
          conversation.messages.pop()
          print(f"Error Occured During Generating Response : {e}")
          continue
-    
-    conversation.add_assistant_message(answer)
-    database.save_messages(conversation.conversation_id,"assistant",answer)
+
+    message_id_as = database.save_messages(conversation.conversation_id,"assistant",answer)
+    conversation.add_assistant_message(answer,message_id_as)
     if memory_manager.need_summary() :
         input("press enter for summary :")
         try:
@@ -60,9 +64,3 @@ while True:
         except RuntimeError as e :
             print(f"Error Occured During Generating Summary : {e}")
     print(f"<------------------------->\n{answer}\n<------------------------->")
-    print(len(conversation.messages))
-    print (conversation_id)
-    convo = database.get_messages(19)
-
-    print (convo)
-    print (conversation.messages)

@@ -14,6 +14,7 @@ class Database:
                     CREATE TABLE IF NOT EXISTS conversations (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         summary TEXT DEFAULT '',
+                        summary_message_id INTEGER DEFAULT 0,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )
@@ -52,15 +53,17 @@ class Database:
                     INSERT INTO messages (conversation_id,role,content)
                     VALUES(?,?,?)
         """,(conversation_id,role,content))
+        message_id = cursor.lastrowid
         connection.commit()
         connection.close()
+        return message_id
 
 
     def get_messages(self,conversation_id):
         connection = sqlite3.connect(self.DataBaseName)
         cursor = connection.cursor()
         cursor.execute("""
-                    SELECT role,content FROM messages WHERE conversation_id = ? ORDER BY id ASC
+                    SELECT id,role,content FROM messages WHERE conversation_id = ? ORDER BY id ASC
         """,(conversation_id,))
         messages = cursor.fetchall()
         connection.close()
@@ -87,12 +90,12 @@ class Database:
         return conversations
 
 
-    def save_summary(self,conversation_id, summary):
+    def save_summary(self,conversation_id, summary,summary_message_id):
         connection = sqlite3.connect(self.DataBaseName)
         cursor = connection.cursor()
         cursor.execute("""
-                    UPDATE conversations SET summary = ? , updated_at = CURRENT_TIMESTAMP WHERE id = ?
-        """,(summary,conversation_id))
+                    UPDATE conversations SET summary = ? , summary_message_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+        """,(summary,summary_message_id,conversation_id))
         connection.commit()
         connection.close()
 
@@ -100,10 +103,13 @@ class Database:
         connection = sqlite3.connect(self.DataBaseName)
         cursor = connection.cursor()
         cursor.execute("""
-                    SELECT summary FROM conversations WHERE id = ?
+                    SELECT summary,summary_message_id FROM conversations WHERE id = ?
         """,(conversation_id,))
         summary = cursor.fetchone()
         connection.close()
         if summary == None :
             raise ValueError(f"conversation with conversation id : {conversation_id} doesn't exist")
-        return summary[0] 
+        return summary
+
+database = Database()
+database.create_tables()

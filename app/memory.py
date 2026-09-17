@@ -1,8 +1,9 @@
 class Conversation :
-    def __init__(self, system_prompt,conversation_id = None):
+    def __init__(self, system_prompt,conversation_id = None,):
         self.system_prompt = system_prompt
         self.summary = ""
         self.messages = []
+        self.summary_message_id = 0
         self.conversation_id = conversation_id
 
     def mes_count(self):
@@ -11,24 +12,27 @@ class Conversation :
     def set_summary(self,summary):
         self.summary = summary
 
-    def add_user_message(self,content):
+    def add_user_message(self,content,message_id):
         self.messages.append(
-            {"role" : "user",
-            "content" : content,}
+            {   "message_id": message_id,
+                "role" : "user",
+                "content" : content,}
         )
 
-    def add_assistant_message(self,content):
+    def add_assistant_message(self,content,message_id=None):
         self.messages.append (
-            {"role" : "assistant",
-             "content" : content}
+            {   "message_id": message_id,
+                "role" : "assistant",
+                "content" : content}
         )
 
-    def load_messages(self,messages):
+    def load_messages(self,messages=None):
         self.messages = []
-        for role,content in messages:
+        for message_id,role,content in messages:
             self.messages.append(
-                {"role": role,
-                "content" : content}
+                {   "id" : message_id,
+                    "role": role,
+                    "content" : content}
                 )
 
     def get_recent_messages(self):
