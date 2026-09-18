@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
 from pydantic import BaseModel
 from .memory import Conversation
 from .database import Database
@@ -28,53 +28,54 @@ def create_conversation():
 @app.get("/conversations")
 def get_conversations():
     conversations = database.get_all_conversations()
-    return (f"conversations : {conversations}")
+    return conversations
 
 @app.get("/conversations/{conversation_id}")
 def get_conversation(conversation_id:int):
-    Convo = database.get_conversation(conversation_id)
-    return Convo
+    conversation = database.get_conversation(conversation_id)
+    if conversation == None:
+        raise HTTPException (status_code=404 ,detail="Conversation Not Found")
+    return conversation
 
 @app.get("/conversations/{conversation_id}/messages")
-def get_messages(conversation_id):
+def get_messages(conversation_id:int):
+    conversation = database.get_conversation(conversation_id)
+    if conversation == None:
+        raise HTTPException(status_code=404 ,detail="Conversation Not Found")
     messages = database.get_messages(conversation_id)
     return messages
 
 @app.post("/conversations/{conversation_id}/messages")
-def send_messages(conversation_id,request:message_request):
+def send_messages(conversation_id:int,request:message_request):
+    conversation_exist = database.get_conversation(conversation_id)
+    if conversation_exist == None:
+        raise HTTPException(status_code=404 , detail= "Conversation Does Not Exist")
     conversation = Conversation(PROMPT_SYSTEM,conversation_id)
 
     messages = database.get_messages(conversation_id)
     conversation.load_messages(messages)
 
-    summary = database.load_summary(conversation_id)
-    conversation.set_summary(summary)
+    loaded_summary,loaded_summary_message_id = database.load_summary(conversation_id)
+    conversation.set_summary(loaded_summary)
+    conversation.summary_message_id = loaded_summary_message_id
 
     memory_Manager = Memory_Manager(conversation,provider,database)
 
-    if conversation.summary :
-        memory_Manager.summary_index = max(0,len(conversation.messages)-10)
+    message_id_us = database.save_messages(conversation_id,"user",request.message)
+    message = conversation.add_user_message(request.message,message_id_us)
 
-    message = conversation.add_user_message(request.message)
-    database.save_messages(conversation_id,"user",request.message)
+    try:
+        answer = provider.generate(conversation.get_messages())
+    except RuntimeError as e :
+        database.delete_message(message_id_us)
+        conversation.messages.pop()
+        raise HTTPException(status_code=500,detail=f"Error Occured During Generating Response : {e} ")
 
-    answer = provider.generate(conversation.get_messages())
-
-    response = conversation.add_assistant_message(answer)
-    database.save_messages(conversation_id,"assistant",answer)
+    message_id_as = database.save_messages(conversation_id,"assistant",answer)
+    response = conversation.add_assistant_message(answer,message_id_as)
 
     if memory_Manager.need_summary():
         memory_Manager.generate_summary()
 
-    return f"Response : {response}"
+    return answer
     
-
-# @app.post("/conversations/{conversation_id}/summary")
-# def save_summary(conversation_id,summary):
-#     save_summary = database.save_summary(conversation_id,summary)
-#     return (f"summary saved : {summary}")
-
-# @app.get("/conversations/{conversation_id}/summary")
-# def get_summary(conversation_id):
-#     summary = database.load_summary(conversation_id)
-#     return (f"summary : {summary}")

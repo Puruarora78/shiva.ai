@@ -111,5 +111,11 @@ class Database:
             raise ValueError(f"conversation with conversation id : {conversation_id} doesn't exist")
         return summary
 
-database = Database()
-database.create_tables()
+    def delete_message(self,message_id):
+        connection = sqlite3.connect(self.DataBaseName)
+        cursor = connection.cursor()
+        cursor.execute("""
+                    DELETE FROM messages WHERE id = ?            
+        """,(message_id,))
+        connection.commit()
+        connection.close()

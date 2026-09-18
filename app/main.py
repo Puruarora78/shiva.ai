@@ -37,8 +37,7 @@ provider = create_llm_provider()
 
 memory_manager = Memory_Manager(conversation,provider,database)
 
-if conversation.summary:
-    memory_manager.summary_index = max(0,(len(conversation.messages) - 10))
+
 
 while True:
     user_message = input(f"Enter Your Query : ")
@@ -51,6 +50,7 @@ while True:
     try:
         answer = provider.generate(conversation.get_messages())
     except RuntimeError as e:
+         database.delete_message(message_id_us)
          conversation.messages.pop()
          print(f"Error Occured During Generating Response : {e}")
          continue
